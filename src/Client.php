@@ -6,10 +6,16 @@ use GuzzleHttp\Client as BaseClient;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
+use Ahmedd\ZohoBooks\TokenManager;
 
 class Client
 {
-    const ENDPOINT = 'https://www.zohoapis.com/books/v3/';
+    const ENDPOINT = 'https://www.zohoapis.eu/books/v3/';
+
+    /**
+     * @var TokenManager
+     */
+    protected $tokenManager;
 
     /**
      * @var BaseClient
@@ -35,14 +41,15 @@ class Client
      * @param ClientInterface|null $httpClient
      * @param array $requestOptions
      */
-    public function __construct($acessToken, ClientInterface $httpClient = null, array $requestOptions = [])
+    public function __construct(TokenManager $authTokenManager, ClientInterface $httpClient = null, array $requestOptions = [])
     {
-        $this->setRequestOauth($acessToken);
+        $this->tokenManager = $authTokenManager;
+        $this->setRequestOauth($this->tokenManager->getAccessToken());
 
         if ($httpClient && $requestOptions) {
             throw new \InvalidArgumentException('If argument 4 is provided, argument 5 must be omitted or passed with an empty array as value');
         }
-        $this->requestOptions += ['base_uri' => self::ENDPOINT, RequestOptions::HTTP_ERRORS => false];
+        $this->requestOptions += ['base_uri' => $this->tokenManager->getBaseApiUrl(), RequestOptions::HTTP_ERRORS => false];
         $this->httpClient = $httpClient ?: new BaseClient($this->requestOptions);
         if (false !== $this->httpClient->getConfig(RequestOptions::HTTP_ERRORS)) {
             throw new \InvalidArgumentException(sprintf('Request option "%s" must be set to `false` at HTTP client', RequestOptions::HTTP_ERRORS));
@@ -51,7 +58,7 @@ class Client
 
     /**
      * append access token to request header
-     * 
+     *
      * @param accessToken string
      * @return void
      */
@@ -69,6 +76,7 @@ class Client
      */
     public function getList($url, $organizationId, array $filters)
     {
+      // dd("<pre>".print_r(['query' => array_merge($this->getParams($organizationId), $filters)],true)."</pre>");
         return $this->processResult(
             $this->httpClient->get($url, ['query' => array_merge($this->getParams($organizationId), $filters)])
         );

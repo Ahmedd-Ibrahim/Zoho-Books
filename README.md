@@ -8,6 +8,28 @@ This package is an upgrade of [**official package**][2]
 
     composer require ahmedd-ibrahim/zohobooks
 
+#### Added feature to automatically refresh access token
+#### Added feature to support multiple Zoho regions
+### Usage
+<pre>
+use Ahmedd\ZohoBooks\Api;
+use Ahmedd\ZohoBooks\TokenManager;
+
+$tokenManager = new TokenManager(
+    env('ZOHO_CLIENT_ID'),
+    env('ZOHO_CLIENT_SECRET'),
+    env('ZOHO_REFRESH_TOKEN'),
+    null, // default path: storage/app/zoho_token.json
+    'eu'  // set your region: us, eu, in, au, jp, ca, cn, sa - default is 'us'
+);
+
+$api = new Api($tokenManager);
+$api->setOrganizationId(env('ZOHO_ORG_ID'));
+
+$api->contacts()->getList(['contact_name_contains'=>'John']);
+</pre>
+
+
 ## TODO
 
 ### 0.x versions - full API with array processing
